@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Reservas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #e0e7ff 50%, #f3e8ff 100%);
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // ACTUALIZA ESTA URL CON LA RUTA DE TU API
+        const API_URL = 'http://localhost/sistema-citas/backend/api';
+
+        // Iconos SVG
+        const Calendar = ({className = "w-6 h-6"}) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+        );
+
+        const Clock = ({className = "w-6 h-6"}) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        );
+
+        const Users = ({className = "w-6 h-6"}) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+        );
+
+        const CheckCircle = ({className = "w-6 h-6"}) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        );
+
+        const AlertCircle = ({className = "w-6 h-6"}) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        );
+
+        const Info = ({className = "w-6 h-6"}) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        );
+
+        const PortalClientes = () => {
+            const [paso, setPaso] = useState(1);
+            const [empresa, setEmpresa] = useState({});
+            const [servicios, setServicios] = useState([]);
+            const [servicioSeleccionado, setServicioSeleccionado] = useState(null);
+            const [proveedoresDisponibles, setProveedoresDisponibles] = useState([]);
+            const [proveedorSeleccionado, setProveedorSeleccionado] = useState(null);
+            const [asignacionAutomatica, setAsignacionAutomatica] = useState(true);
+            const [fecha, setFecha] = useState('');
+            const [horariosDisponibles, setHorariosDisponibles] = useState([]);
+            const [horarioSeleccionado, setHorarioSeleccionado] = useState(null);
+            const [datosCliente, setDatosCliente] = useState({
+                nombre: '',
+                email: '',
+                telefono: '',
+                num_integrantes: 1,
+                notas: ''
+            });
+            const [cargando, setCargando] = useState(false);
+            const [mensaje, setMensaje] = useState(null);
+            const [citaConfirmada, setCitaConfirmada] = useState(null);
+
+            useEffect(() => {
+                cargarEmpresa();
+                cargarServicios();
+            }, []);
+
+            useEffect(() => {
+                if (servicioSeleccionado && fecha) {
+                    cargarHorarios();
+                }
+            }, [servicioSeleccionado, fecha]);
+
+            const cargarEmpresa = async () => {
+                try {
+                    const res = await fetch(`${API_URL}/empresa.php`);
+                    const data = await res.json();
+                    setEmpresa(data);
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            };
+
+            const cargarServicios = async () => {
+                try {
+                    const res = await fetch(`${API_URL}/servicios.php?activo=true`);
+                    const data = await res.json();
+                    setServicios(data);
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            };
+
+            const cargarHorarios = async () => {
+                setCargando(true);
+                try {
+                    const res = await fetch(`${API_URL}/horarios-disponibles.php?servicio_id=${servicioSeleccionado.id}&fecha=${fecha}`);
+                    const data = await res.json();
+                    setHorariosDisponibles(data.horarios || []);
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+                setCargando(false);
+            };
+
+            const seleccionarServicio = (servicio) => {
+                setServicioSeleccionado(servicio);
+                setDatosCliente({...datosCliente, num_integrantes: 1});
+                cargarProveedoresServicio(servicio.id);
+                setPaso(2);
+            };
+
+            const cargarProveedoresServicio = async (servicioId) => {
+                try {
+                    const res = await fetch(`${API_URL}/proveedores.php?servicio_id=${servicioId}&activo=true`);
+                    const data = await res.json();
+                    setProveedoresDisponibles(data);
+                    //console.log(data);
+                    if (data.length === 1) {
+                        setProveedorSeleccionado(data[0].id);
+                        setAsignacionAutomatica(false);
+                    } else if (data.length > 1) {
+                        setAsignacionAutomatica(true);
+                    }
+                } catch (error) {
+                    console.error('Error al cargar proveedores:', error);
+                }
+            };
+
+            const seleccionarFechaHora = (horario) => {
+                setHorarioSeleccionado(horario);
+                setPaso(3);
+            };
+
+            const agendarCita = async () => {
+                if (!datosCliente.nombre || !datosCliente.email) {
+                    setMensaje({ tipo: 'error', texto: 'Por favor completa todos los campos obligatorios' });
+                    return;
+                }
+
+                if (datosCliente.num_integrantes > horarioSeleccionado.disponibles) {
+                    setMensaje({ 
+                        tipo: 'error', 
+                        texto: `Solo hay ${horarioSeleccionado.disponibles} lugares disponibles en este horario` 
+                    });
+                    return;
+                }
+
+                setCargando(true);
+                try {
+                    const resCliente = await fetch(`${API_URL}/clientes.php`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            nombre: datosCliente.nombre,
+                            email: datosCliente.email,
+                            telefono: datosCliente.telefono
+                        })
+                    });
+                    const cliente = await resCliente.json();
+
+                    const resCita = await fetch(`${API_URL}/citas.php`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            servicio_id: servicioSeleccionado.id,
+                            proveedor_id: asignacionAutomatica ? null : (proveedorSeleccionado || null),
+                            asignacion_automatica: asignacionAutomatica,
+                            cliente_id: cliente.id,
+                            fecha: fecha,
+                            hora_inicio: horarioSeleccionado.hora_inicio,
+                            hora_fin: horarioSeleccionado.hora_fin,
+                            num_integrantes: datosCliente.num_integrantes,
+                            notas: datosCliente.notas
+                        })
+                    });
+
+                    if (resCita.ok) {
+                        setCitaConfirmada({
+                            servicio: servicioSeleccionado.nombre,
+                            fecha: fecha,
+                            hora: horarioSeleccionado.hora_inicio,
+                            integrantes: datosCliente.num_integrantes
+                        });
+                        setPaso(4);
+                    } else {
+                        const error = await resCita.json();
+                        setMensaje({ tipo: 'error', texto: error.mensaje || 'Error al agendar la cita' });
+                    }
+                } catch (error) {
+                    setMensaje({ tipo: 'error', texto: 'Error al procesar la solicitud' });
+                }
+                setCargando(false);
+            };
+
+            const reiniciar = () => {
+                setPaso(1);
+                setServicioSeleccionado(null);
+                setProveedoresDisponibles([]);
+                setProveedorSeleccionado(null);
+                setAsignacionAutomatica(true);
+                setFecha('');
+                setHorarioSeleccionado(null);
+                setDatosCliente({ nombre: '', email: '', telefono: '', num_integrantes: 1, notas: '' });
+                setMensaje(null);
+                setCitaConfirmada(null);
+            };
+
+            const getFechaMinima = () => {
+                return new Date().toISOString().split('T')[0];
+            };
+
+            return (
+                <div className="min-h-screen">
+                    {/* Header */}
+                    <div className="bg-white shadow-lg">
+                        <div className="max-w-4xl mx-auto px-6 py-8">
+                            <h1 className="text-3xl font-bold text-gray-800">{empresa.nombre || 'Portal de Reservas'}</h1>
+                            {empresa.descripcion && (
+                                <p className="text-gray-600 mt-2">{empresa.descripcion}</p>
+                            )}
+                            {empresa.telefono && (
+                                <p className="text-sm text-gray-500 mt-2">📞 {empresa.telefono} • 📧 {empresa.email}</p>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Indicador de pasos */}
+                    <div className="max-w-4xl mx-auto px-6 py-8">
+                        <div className="flex items-center justify-center mb-8">
+                            {[1, 2, 3, 4].map((num) => (
+                                <React.Fragment key={num}>
+                                    <div className={`flex items-center justify-center w-10 h-10 rounded-full font-bold ${
+                                        paso >= num ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
+                                    }`}>
+                                        {paso > num ? <CheckCircle /> : num}
+                                    </div>
+                                    {num < 4 && (
+                                        <div className={`w-16 h-1 ${paso > num ? 'bg-blue-600' : 'bg-gray-300'}`} />
+                                    )}
+                                </React.Fragment>
+                            ))}
+                        </div>
+
+                        {mensaje && (
+                            <div className={`mb-6 p-4 rounded-lg flex items-center gap-3 ${
+                                mensaje.tipo === 'error' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                            }`}>
+                                <AlertCircle className="w-5 h-5" />
+                                {mensaje.texto}
+                            </div>
+                        )}
+
+                        {/* PASO 1: Seleccionar Servicio */}
+                        {paso === 1 && (
+                            <div className="space-y-4">
+                                <h2 className="text-2xl font-bold mb-6">Selecciona un Servicio</h2>
+                                <div className="grid md:grid-cols-2 gap-4">
+                                    {servicios.map(servicio => (
+                                        <div
+                                            key={servicio.id}
+                                            onClick={() => seleccionarServicio(servicio)}
+                                            className="bg-white rounded-lg shadow-lg p-6 cursor-pointer hover:shadow-xl transition-shadow border-2 border-transparent hover:border-blue-500"
+                                        >
+                                            <h3 className="text-xl font-bold text-gray-800 mb-2">{servicio.nombre}</h3>
+                                            <p className="text-gray-600 text-sm mb-4">{servicio.descripcion}</p>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-2xl font-bold text-blue-600">${servicio.precio}</span>
+                                                <span className="text-sm text-gray-500 flex items-center gap-1">
+                                                    <Users className="w-4 h-4" />
+                                                    Máx. {servicio.max_integrantes} personas
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* PASO 2: Seleccionar Fecha y Hora */}
+                        {paso === 2 && (
+                            <div className="bg-white rounded-lg shadow-lg p-6">
+                                <h2 className="text-2xl font-bold mb-6">Selecciona Fecha y Hora</h2>
+                                
+                                <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+                                    <h3 className="font-semibold text-lg">{servicioSeleccionado.nombre}</h3>
+                                    <p className="text-sm text-gray-600">{servicioSeleccionado.descripcion}</p>
+                                </div>
+
+                                {/* Selección de Proveedor */}
+                                {proveedoresDisponibles.length > 1 && (
+                                    <div className="mb-6 p-4 bg-white rounded-lg border-2 border-blue-200">
+                                        <h3 className="font-semibold mb-3">Selecciona un proveedor (opcional)</h3>
+                                        
+                                        <label className="flex items-center gap-2 p-3 border rounded hover:bg-blue-50 cursor-pointer mb-3">
+                                            <input
+                                                type="checkbox"
+                                                checked={asignacionAutomatica}
+                                                onChange={(e) => {
+                                                    setAsignacionAutomatica(e.target.checked);
+                                                    if (e.target.checked) setProveedorSeleccionado(null);
+                                                }}
+                                                className="w-4 h-4"
+                                            />
+                                            <span className="text-sm font-medium">Asignar proveedor automáticamente</span>
+                                        </label>
+
+                                        {!asignacionAutomatica && (
+                                            <div className="space-y-2">
+                                                {proveedoresDisponibles.map(proveedor => (
+                                                    <label
+                                                        key={proveedor.id}
+                                                        className={`flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all ${
+                                                            proveedorSeleccionado === proveedor.id
+                                                                ? 'border-blue-500 bg-blue-50'
+                                                                : 'border-gray-300 hover:border-blue-400'
+                                                        }`}
+                                                    >
+                                                        <input
+                                                            type="radio"
+                                                            name="proveedor"
+                                                            value={proveedor.id}
+                                                            checked={proveedorSeleccionado === proveedor.id}
+                                                            onChange={() => setProveedorSeleccionado(proveedor.id)}
+                                                            className="w-4 h-4"
+                                                        />
+                                                        <div>
+                                                            <div className="font-semibold">{proveedor.nombre}</div>
+                                                            {proveedor.especialidad && (
+                                                                <div className="text-sm text-gray-600">{proveedor.especialidad}</div>
+                                                            )}
+                                                        </div>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                <div className="mb-6">
+                                    <label className="block text-sm font-medium mb-2">Selecciona una fecha</label>
+                                    <input
+                                        type="date"
+                                        value={fecha}
+                                        min={getFechaMinima()}
+                                        onChange={(e) => setFecha(e.target.value)}
+                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg"
+                                    />
+                                </div>
+
+                                {fecha && (
+                                    <div>
+                                        <h3 className="font-semibold mb-3">Horarios disponibles</h3>
+                                        {cargando ? (
+                                            <div className="text-center py-8">Cargando...</div>
+                                        ) : horariosDisponibles.length === 0 ? (
+                                            <div className="text-center py-8 text-gray-500">
+                                                No hay horarios disponibles para esta fecha
+                                            </div>
+                                        ) : (
+                                            <div className="grid grid-cols-3 gap-3">
+                                                {horariosDisponibles.map((horario, idx) => (
+                                                    <button
+                                                        key={idx}
+                                                        onClick={() => horario.disponible && seleccionarFechaHora(horario)}
+                                                        disabled={!horario.disponible}
+                                                        className={`p-4 rounded-lg border-2 transition-all ${
+                                                            horario.disponible
+                                                                ? 'border-gray-300 hover:border-blue-500 hover:bg-blue-50'
+                                                                : 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-center justify-center gap-2 font-semibold">
+                                                            <Clock className="w-4 h-4" />
+                                                            {horario.hora_inicio.substring(0, 5)}
+                                                        </div>
+                                                        <div className="text-xs mt-2">
+                                                            {horario.disponible ? (
+                                                                <span className="text-green-600">{horario.disponibles} disponibles</span>
+                                                            ) : (
+                                                                <span className="text-red-600">Completo</span>
+                                                            )}
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                <div className="mt-6">
+                                    <button
+                                        onClick={() => setPaso(1)}
+                                        className="px-6 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"
+                                    >
+                                        Atrás
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* PASO 3: Datos del Cliente */}
+                        {paso === 3 && horarioSeleccionado && (
+                            <div className="bg-white rounded-lg shadow-lg p-6">
+                                <h2 className="text-2xl font-bold mb-6">Completa tus Datos</h2>
+
+                                <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+                                    <div className="text-sm text-gray-600 mb-2">
+                                        {fecha} • {horarioSeleccionado.hora_inicio.substring(0, 5)}
+                                    </div>
+                                    <h3 className="font-semibold">{servicioSeleccionado.nombre}</h3>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">Nombre Completo *</label>
+                                        <input
+                                            type="text"
+                                            value={datosCliente.nombre}
+                                            onChange={(e) => setDatosCliente({...datosCliente, nombre: e.target.value})}
+                                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">Email *</label>
+                                        <input
+                                            type="email"
+                                            value={datosCliente.email}
+                                            onChange={(e) => setDatosCliente({...datosCliente, email: e.target.value})}
+                                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">Teléfono</label>
+                                        <input
+                                            type="tel"
+                                            value={datosCliente.telefono}
+                                            onChange={(e) => setDatosCliente({...datosCliente, telefono: e.target.value})}
+                                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">Número de Integrantes</label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max={horarioSeleccionado.disponibles}
+                                            value={datosCliente.num_integrantes}
+                                            onChange={(e) => setDatosCliente({...datosCliente, num_integrantes: parseInt(e.target.value)})}
+                                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1">Notas</label>
+                                        <textarea
+                                            value={datosCliente.notas}
+                                            onChange={(e) => setDatosCliente({...datosCliente, notas: e.target.value})}
+                                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg"
+                                            rows="3"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="mt-6 flex gap-3">
+                                    <button
+                                        onClick={() => setPaso(2)}
+                                        className="px-6 py-3 bg-gray-300 rounded-lg"
+                                    >
+                                        Atrás
+                                    </button>
+                                    <button
+                                        onClick={agendarCita}
+                                        disabled={cargando}
+                                        className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold disabled:bg-gray-400"
+                                    >
+                                        {cargando ? 'Procesando...' : 'Confirmar Reserva'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* PASO 4: Confirmación */}
+                        {paso === 4 && citaConfirmada && (
+                            <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+                                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <CheckCircle className="w-12 h-12 text-green-600" />
+                                </div>
+                                <h2 className="text-3xl font-bold text-gray-800 mb-4">¡Reserva Confirmada!</h2>
+                                <p className="text-gray-600 mb-8">
+                                    Tu cita ha sido agendada exitosamente.
+                                </p>
+                                
+                                <div className="bg-blue-50 rounded-lg p-6 mb-8 text-left">
+                                    <h3 className="font-semibold text-lg mb-3">Detalles:</h3>
+                                    <div className="space-y-2">
+                                        <p><strong>Servicio:</strong> {citaConfirmada.servicio}</p>
+                                        <p><strong>Fecha:</strong> {citaConfirmada.fecha}</p>
+                                        <p><strong>Hora:</strong> {citaConfirmada.hora.substring(0, 5)}</p>
+                                        <p><strong>Integrantes:</strong> {citaConfirmada.integrantes}</p>
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={reiniciar}
+                                    className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
+                                >
+                                    Agendar Otra Cita
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<PortalClientes />, document.getElementById('root'));
+    </script>
+</body>
+</html>
