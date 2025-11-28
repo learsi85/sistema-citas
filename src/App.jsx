@@ -864,25 +864,14 @@ const AdminPanel = () => {
     const dias = getDiasDelMes();
 
     return (
-      <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+      <div className="bg-white rounded-lg shadow p-6">
         {/* Formulario de nueva cita bg-white rounded-lg shadow p-6"> */}
         {mostrarFormulario && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="bg-gradient-to-r from-green-600 to-emerald-600 p-6 text-white">
-                <div className="flex justify-between items-center">
+          <div className="mb-6 p-4 bg-gray-50 rounded-lg space-y-3">
+              <div>
                   <h2 className="text-2xl font-bold flex items-center gap-2">
                     Nueva Cita
                   </h2>
-                  <button
-                    onClick={cerrarFormulario}
-                    className="text-white hover:text-gray-200 transition"
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
               </div>
 
               <div className="p-6 space-y-4">
@@ -1024,8 +1013,6 @@ const AdminPanel = () => {
                   rows="3"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                 />
-              </div>
-              <div className="bg-gray-50 p-6 flex gap-3 justify-end border-t">
                 {/* Botones */}
                 <div className="flex gap-3 mt-6">
                   <button
@@ -1052,7 +1039,6 @@ const AdminPanel = () => {
                   </button>
                 </div>
               </div>
-            </div>
           </div>
         )}
         <div className="flex justify-between items-center mb-6">
