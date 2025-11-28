@@ -214,7 +214,10 @@ const AdminPanel = () => {
             </h2>
             <button
               onClick={() => setShowForm(!showForm)}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2"
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition whitespace-nowrap ${
+                showForm ? 'bg-gray-300 hover:bg-gray-400 text-gray-800'
+                  : 'bg-green-600 hover:bg-green-700 text-white'
+              }`}
             >
               <Plus className="w-4 h-4" />
               Nuevo Servicio
@@ -382,7 +385,10 @@ const AdminPanel = () => {
             </h2>
             <button
               onClick={() => setShowForm(!showForm)}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2"
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition whitespace-nowrap ${
+                showForm ? 'bg-gray-300 hover:bg-gray-400 text-gray-800'
+                  : 'bg-green-600 hover:bg-green-700 text-white'
+              }`}
             >
               <Plus className="w-4 h-4" />
               Nuevo Proveedor
@@ -537,7 +543,10 @@ const AdminPanel = () => {
           </h2>
           <button
             onClick={() => setShowForm(!showForm)}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2"
+            className={`px-4 py-2 rounded-lg flex items-center gap-2 transition whitespace-nowrap ${
+              showForm ? 'bg-gray-300 hover:bg-gray-400 text-gray-800'
+                : 'bg-green-600 hover:bg-green-700 text-white'
+            }`}
           >
             <Plus className="w-4 h-4" />
             Nuevo Horario
@@ -865,15 +874,37 @@ const AdminPanel = () => {
 
     return (
       <div className="bg-white rounded-lg shadow p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+            <Calendar className="w-6 h-6" />
+            Citas Agendadas
+          </h2>
+          <button
+            onClick={() => setVistaCalendario(!vistaCalendario)}
+            className="flex items-center gap-2 px-4 py-2  bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {vistaCalendario ? (<Eye className="w-4 h-4" />):(<EyeClosed className="w-4 h-4" />)}
+            Calendario
+          </button>
+          {mostrarFormulario ? (
+            <button
+              onClick={cerrarFormulario}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg font-semibold transition"
+            >
+             + Nueva Cita
+            </button>
+          ):(
+            <button
+              onClick={abrirFormularioNuevaCita}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+            >
+              + Nueva Cita
+            </button>
+          )}
+        </div>
         {/* Formulario de nueva cita bg-white rounded-lg shadow p-6"> */}
         {mostrarFormulario && (
           <div className="mb-6 p-4 bg-gray-50 rounded-lg space-y-3">
-              <div>
-                  <h2 className="text-2xl font-bold flex items-center gap-2">
-                    Nueva Cita
-                  </h2>
-              </div>
-
               <div className="p-6 space-y-4">
                 {/* Cliente Nuevo Toggle */}
                 <div className="flex items-center space-x-3">
@@ -1027,7 +1058,7 @@ const AdminPanel = () => {
                     ) : (
                       <>
                         <Plus size={18} />
-                        Guardar Producto
+                        Agendar Cita
                       </>
                     )}
                   </button>
@@ -1041,25 +1072,7 @@ const AdminPanel = () => {
               </div>
           </div>
         )}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-            <Calendar className="w-6 h-6" />
-            Citas Agendadas
-          </h2>
-          <button
-            onClick={abrirFormularioNuevaCita}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
-          >
-            + Nueva Cita
-          </button>
-          <button
-            onClick={() => setVistaCalendario(!vistaCalendario)}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-          >
-            {vistaCalendario ? (<Eye className="w-4 h-4" />):(<EyeClosed className="w-4 h-4" />)}
-            Calendario
-          </button>
-        </div>
+        
         {vistaCalendario ? (
           <div className="max-w-6xl mx-auto p-6 bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen">
             <div className="bg-white rounded-2xl shadow-xl p-6">
